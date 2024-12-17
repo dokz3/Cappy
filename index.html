@@ -464,14 +464,6 @@ function addCustomProduct() {
                     points: rfidData.points - pointsNeeded
                 });
 
-                await db.collection('test').doc('transactions').collection('transaction_logs').add({
-                    id: Date.now().toString(), 
-                    items: cart.map(item => item.name), 
-                    paymentMethod: 'RFID',
-                    timestamp: new Date(),
-                    total: pointsNeeded
-                });
-
                 alert('Payment successful via RFID!');
                 resetCart(); 
             } catch (error) {
