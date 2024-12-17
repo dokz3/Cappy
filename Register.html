@@ -120,23 +120,6 @@
     }
 </style>
 
-<!-- Modal for registering new RFID account -->
-<div id="registerModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Register New RFID Account</h2>
-        <label for="newRfid">RFID Card ID:</label>
-        <input type="text" id="newRfid" placeholder="Enter new RFID" required>
-        <label for="newName">Name:</label>
-        <input type="text" id="newName" placeholder="If you want to change Names" required>
-        <label for="newPin">PIN:</label>
-        <input type="text" id="newPin" required>
-        
-        <button id="registerButton">Register</button>
-        
-    </div>
-</div>
-
 <script>
     // Get the modal
     var modal = document.getElementById("registerModal");
@@ -205,7 +188,7 @@
     <div class="container">
         <!-- Add this button inside the container or wherever appropriate -->
 <button id="backButton" style="padding: 10px 20px;">Back</button>
- <a href="balancecheck.html" class="button">Check Balance</a>
+<center> <a href="balancecheck.html" class="button">Check Balance</a> </center>
 <script>
     document.getElementById('backButton').addEventListener('click', function() {
         window.location.href = './index.html'; // Navigate to SampleRetail.html
