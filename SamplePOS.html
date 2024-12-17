@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-app-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore-compat.js"></script>
+
+        
+    <title>RFID Points Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input {
+            width: 94%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 30%;
+            padding: 10px;
+            background-color: #3f0bfa;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: auto;
+        }
+
+        button:hover {
+            background-color: #d31034;
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<!-- Modal for registering new RFID account -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Register New RFID Account</h2>
+        <label for="newRfid">RFID Card ID:</label>
+        <input type="text" id="newRfid" placeholder="Enter new RFID" required>
+        
+        <label for="newName">Name:</label>
+        <input type="text" id="newName" required>
+        
+        <label for="newPin">PIN:</label>
+        <input type="text" id="newPin" required>
+        
+        <button id="registerButton">Register</button>
+    </div>
+    <!-- Add this CSS to style the modal -->
+<style>
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+    }
+
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+
+<!-- Modal for registering new RFID account -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Register New RFID Account</h2>
+        <label for="newRfid">RFID Card ID:</label>
+        <input type="text" id="newRfid" placeholder="Enter new RFID" required>
+        
+        <label for="newName">Name:</label>
+        <input type="text" id="newName" required>
+        
+        <label for="newPin">PIN:</label>
+        <input type="text" id="newPin" required>
+        
+        <button id="registerButton">Register</button>
+        
+    </div>
+</div>
+
+<script>
+    // Get the modal
+    var modal = document.getElementById("registerModal");
+
+    // Get the button that opens the modal (you need to create a button to open the modal)
+    var btn = document.createElement("button");
+    btn.innerHTML = "Register";
+    document.body.appendChild(btn);
+
+    // When the user clicks the button, open the modal 
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    document.querySelector(".close-button").onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+</div>
+
+<script>
+    // Existing Firebase configuration and initialization code...
+
+    document.getElementById("registerButton").addEventListener("click", function() {
+        const newRfid = document.getElementById("newRfid").value.trim();
+        const newName = document.getElementById("newName").value.trim();
+        const newPin = document.getElementById("newPin").value.trim();
+
+        // Validate input fields
+        if (!newRfid || !newName || !newPin) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        // Convert pin to number
+        const pinNumber = parseInt(newPin);
+        if (isNaN(pinNumber)) {
+            alert('PIN must be a number.');
+            return;
+        }
+
+        // Add the new RFID account to Firestore
+        db.collection('rfid_cards').doc(newRfid).set({
+            deactivated: false, // Set deactivated to false
+            name: newName,      // Store name as a string
+            pin: pinNumber,     // Store pin as a number
+            points: 0           // Initialize points to 0
+        }).then(() => {
+            alert('New RFID account registered successfully!');
+            modal.style.display = "none"; // Close the modal after registration
+        }).catch((error) => {
+            alert('Error registering RFID account: ' + error.message);
+        });
+    });
+</script>
+
+
+    <div class="container">
+        <!-- Add this button inside the container or wherever appropriate -->
+<button id="backButton" style="padding: 10px 20px;">Back</button>
+
+<script>
+    document.getElementById('backButton').addEventListener('click', function() {
+        window.location.href = 'SampleRetail.html'; // Navigate to SampleRetail.html
+    });
+</script>
+        <h1>Add Points to RFID Card</h1>
+        <form id="pointsForm">
+            <label for="rfid">RFID Card ID:</label>
+            <input type="text" id="rfid" required>
+            <label for="rfid">Name:</label>
+            <input type="text" id="name" required>
+              <label for="accountRename">Rename Account:</label>
+    <input type="text" id="accountRename"> 
+            <label for="rfid">PIN:</label>
+            <input type="text" id="pin" required>
+            <center>or</center>
+            <button type="button" id="scanButton">Scan RFID Card</button>
+            <label for="points">Points to Add:</label>
+            <input type="number" id="points" required>
+            <button type="submit">Add Points</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQT0shSNqvUFrinSbNQ8aEg8IUZxgZIc8",
+            authDomain: "rfid-69405.firebaseapp.com",
+            projectId: "rfid-69405",
+            storageBucket: "rfid-69405.appspot.com",
+            messagingSenderId: "461366160537",
+            appId: "1:461366160537:web:4a130092163cc2e6c01c08",
+            measurementId: "G-M0F73797VX"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+document.getElementById('pointsForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const rfid = document.getElementById('rfid').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const pin = document.getElementById('pin').value.trim();
+    const pointsToAdd = parseInt(document.getElementById('points').value);
+
+    if (!rfid || !name || !pin || isNaN(pointsToAdd)) {
+        document.getElementById('message').innerText = 'Please enter a valid RFID, Name, PIN and points.';
+        return;
+    }
+
+    try {
+        const docRef = db.collection('rfid_cards').doc(rfid); 
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            await docRef.set({ points: pointsToAdd, name, pin: parseInt(pin), deactivated: false });
+            document.getElementById('message').innerText = `RFID created.`;
+            return;
+        }
+
+        const rfidData = docSnap.data();
+
+        if (rfidData.deactivated) {
+            document.getElementById('message').innerText = `The RFID card is deactivated. Points cannot be added.`;
+            return;
+        }
+
+        // Check if the provided PIN matches the stored PIN
+        if (rfidData.pin !== parseInt(pin)) {
+            document.getElementById('message').innerText = 'Incorrect PIN. Points cannot be added.';
+            return;
+        }
+
+        const currentPoints = rfidData.points || 0;
+        const updatedPoints = currentPoints + pointsToAdd;
+
+        await docRef.update({ points: updatedPoints });
+
+        document.getElementById('message').innerText = `Points added successfully! New Total: ${updatedPoints}`;
+    } catch (error) {
+        document.getElementById('message').innerText = 'Error: ' + error.message;
+    }
+});
+
+        document.getElementById('scanButton').addEventListener('click', function() {
+            const scanButton = document.getElementById('scanButton');
+            scanButton.disabled = true;
+            scanButton.innerText = 'Scanning...';
+
+            fetch('http://192.168.1.1/scan')  // Change to your ESP32 IP address
+                .then(response => response .json())
+                .then(data => {
+                    document.getElementById('rfid').value = data.rfid; // Assuming the ESP32 returns the RFID ID in JSON format
+                    scanButton.disabled = false; // Re-enable the button after scanning
+                    scanButton.innerText = 'Scan RFID Card'; // Reset button text
+                })
+                .catch(error => {
+                    document.getElementById('message').innerText = 'Error scanning RFID: ' + error.message;
+                    scanButton.disabled = false; // Re-enable the button on error
+                    scanButton.innerText = 'Scan RFID Card'; // Reset button text
+                });
+        });
+    </script>
+</body>
+
+</html>

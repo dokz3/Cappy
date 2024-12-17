@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore-compat.js"></script>    
+    <title>Sample Retail Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            display: inline;
+            margin: 0 15px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: center;
+        }
+
+        .product {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h2><button onclick="window.location.href='C:/Users/ADMIN/Documents/RFID APP/SamplePOS.html';">Register RFID or Add Points</button></h2>
+        <h1>Retail Store</h1>
+        <nav>
+            <ul>
+                <li><a href="#products">Products</a></li>
+                <li><button id="cart-button">Cart (<span id="cart-count">0</span>)</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="products">
+            <h2>Products</h2>
+            <div class="product-grid">
+                <div class="product" data-id="1" data-name="Product 1" data-price="10">
+                    <h3>Product 1</h3>
+                    <p>Price: ₱10.00</p>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+                <div class="product" data-id="2" data-name="Product 2" data-price="15">
+                    <h3>Product 2</h3>
+                    <p>Price: ₱15.00</p>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+                <div class="product" data-id="3" data-name="Product 3" data-price="20">
+                    <h3>Product 3</h3>
+                    <p>Price: ₱20.00</p>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+                <div class="product" data-id="4" data-name="Product 4" data-price="25">
+                    <h3>Product 4</h3>
+                    <p>Price: ₱25.00</p>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+ <div class="product" data-id="5" data-name="Product 5" data-price="30">
+                    <h3>Product 5</h3>
+                    <p>Price: ₱30.00</p>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Your Cart</h2>
+            <ul id="cart-items"></ul>
+            <p id="total-price">Total: ₱0.00</p>
+            <button id="checkout-cash">Pay Cash</button>
+            <button id="checkout-rfid">Pay via RFID</button>
+        </div>
+    </div>
+
+    <div id="rfid-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>RFID Payment</h2>
+            <label for="rfidInput">Enter RFID Number:</label>
+            <input type="text" id="rfidInput" placeholder="RFID Number" autofocus>
+            <button onclick="processRFID()">Submit</button>
+            <button onclick="scanRFID()">Scan RFID</button>
+            <button onclick="clearInput()">Clear Input</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Sample Retail Store</p>
+    </footer>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQT0shSNqvUFrinSbNQ8aEg8IUZxgZIc8",
+            authDomain: "rfid-69405.firebaseapp.com",
+            projectId: "rfid-69405",
+            storageBucket: "rfid-69405.appspot.com",
+            messagingSenderId: "461366160537",
+            appId: "1:461366160537:web:4a130092163cc2e6c01c08",
+            measurementId: "G-M0F73797VX"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Variables for cart and total
+        let cart = [];
+        let total = 0;
+
+        async function fetchProducts() {
+            const productGrid = document.querySelector('.product-grid');
+            productGrid.innerHTML = ''; 
+
+            try {
+                const querySnapshot = await db.collection('test').doc('product').collection('product1').get();
+
+                if (querySnapshot.empty) {
+                    productGrid.innerHTML = '<p>No products available.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    const product = doc.data(); 
+                    const name = product.name || 'Unnamed Product';
+                    const description = product.description || 'No description available';
+                    const price = parseFloat(product.price) || 0; 
+
+                    // Create a product card for the grid
+                    const productDiv = document.createElement('div');
+                    productDiv.classList.add('product');
+                    productDiv.setAttribute('data-id', doc.id);
+                    productDiv.setAttribute('data-name', name);
+                    productDiv.setAttribute('data-price', price);
+
+                    productDiv.innerHTML = `
+                        <h3>${name}</h3>
+                        <p>${description}</p>
+                        <p>Price: $${price.toFixed(2)}</p>
+                        <button class="add-to-cart">Add to Cart</button>
+                    `;
+
+                    productGrid.appendChild(productDiv);
+                });
+
+                attachAddToCartListeners();
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                productGrid.innerHTML = '<p>Failed to load products. Please try again later.</p>';
+            }
+        }
+
+        function attachAddToCartListeners() {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
+                button.addEventListener('click', () => {
+                    const product = button.parentElement;
+                    const id = product.getAttribute('data-id');
+                    const name = product.getAttribute('data-name');
+                    const price = parseFloat(product.getAttribute('data-price'));
+
+                    cart.push({ id, name, price });
+                    total += price;
+
+                    document.getElementById('cart-count').innerText = cart.length;
+                });
+            });
+        }
+
+        function updateCart() {
+    const cartItems = document.getElementById('cart-items');
+    cartItems.innerHTML = '';
+
+    cart.forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = `${item.name} - ₱${item.price.toFixed(2)}`; // Changed to pesos
+        cartItems.appendChild(li);
+    });
+
+    document.getElementById('total-price').innerText = `Total: ₱${total.toFixed(2)}`; // Changed to pesos
+}
+
+        async function processRFID() {
+            const rfidInput = document.getElementById('rfidInput').value.trim();
+            if (!rfidInput) {
+                alert('Please enter or scan an RFID number.');
+                return;
+            }
+
+            try {
+                const rfidDoc = await db.collection('rfid_cards').doc(rfidInput).get();
+                if (!rfidDoc.exists) {
+                    alert(`RFID card "${rfidInput}" not found.`);
+                    return;
+                }
+
+                const rfidData = rfidDoc.data();
+
+                const pointsNeeded = total; 
+                if (rfidData.points < pointsNeeded) {
+                    alert('Insufficient points for this transaction.');
+                    return;
+                }
+
+                await db.collection('rfid_cards').doc(rfidInput).update({
+                    points: rfidData.points - pointsNeeded
+                });
+
+                await db.collection('test').doc('transactions').collection('transaction_logs').add({
+                    id: Date.now().toString(), 
+                    items: cart.map(item => item.name), 
+                    paymentMethod: 'RFID',
+                    timestamp: new Date(),
+                    total: pointsNeeded
+                });
+
+                alert('Payment successful via RFID!');
+                resetCart(); 
+            } catch (error) {
+                console.error('Error processing RFID payment:', error);
+                alert('An error occurred while processing the payment.');
+            }
+        }
+
+        function resetCart() {
+            cart = [];
+            total = 0;
+            document.getElementById('cart-count').innerText = cart.length;
+            updateCart();
+            document.getElementById('cart-modal').style.display = 'none';
+            document.getElementById('rfid-modal').style.display = 'none';
+        }
+
+        fetchProducts();
+
+        document.getElementById('checkout-cash').addEventListener('click', () => {
+            alert('Thank you for your cash payment!');
+            resetCart();
+        });
+
+        document.getElementById('checkout-rfid').addEventListener('click', () => {
+            document.getElementById('rfid-modal').style.display = 'block';
+        });
+
+        document.getElementById('cart-button').addEventListener('click', () => {
+            updateCart();
+            document.getElementById('cart-modal').style.display = 'block';
+        });
+
+        document.querySelectorAll('.close').forEach(button => {
+            button.addEventListener('click', () => {
+                document.getElementById('cart-modal').style.display = 'none';
+                document.getElementById('rfid-modal').style.display = 'none';
+            });
+        });
+
+    </script>
+</body>
+</html>
