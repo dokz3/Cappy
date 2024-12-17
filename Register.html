@@ -198,8 +198,10 @@
         <form id="pointsForm">
             <label for="rfid">RFID Card ID:</label>
             <input type="text" id="rfid" required>
-              <label for="accountRename">Rename Account:</label>
-    <input type="text" id="accountRename"> 
+            <label for="rfid">Name:</label>
+            <input type="text" id="name" required>
+            <label for="accountRename">Rename Account:</label>
+            <input type="text" id="accountRename"> 
             <label for="rfid">PIN:</label>
             <input type="text" id="pin" required>
             <center>or</center>
@@ -233,7 +235,7 @@ document.getElementById('pointsForm').addEventListener('submit', async function(
     const pin = document.getElementById('pin').value.trim();
     const pointsToAdd = parseInt(document.getElementById('points').value);
 
-    if (!rfid || !pin || isNaN(pointsToAdd)) {
+    if (!rfid || !name || !pin || isNaN(pointsToAdd)) {
         document.getElementById('message').innerText = 'Please enter a valid RFID, PIN and points.';
         return;
     }
