@@ -33,6 +33,9 @@
 
         main {
             padding: 20px;
+                 background-image: url('./asset/ENigmatic\ ERB.png'); /* Replace with your image path */
+    background-size: cover; /* Cover the entire header area */
+    background-position: center; /* Center the image */
         }
 
         .product-grid {
@@ -49,8 +52,13 @@
             padding: 15px;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+              transition: transform 0.2s ease, box-shadow 0.2s ease; 
 
+        }
+        .product:hover {
+        transform: scale(1.05); /* Scale up the product card */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+        }
         button {
             background-color: #007bff;
             color: white;
@@ -119,11 +127,29 @@
             <ul>
                 <li><a href="#products">Products</a></li>
                 <li><button id="cart-button">Cart (<span id="cart-count">0</span>)</button></li>
+                <div>
+    <input type="text" id="rfidInput" placeholder="Enter RFID Number" />
+    <button id="fetch-transactions">Show Transactions</button>
+    <div id="transaction-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Transaction History</h2>
+        <ul id="transaction-list"></ul>
+        <button id="close-transaction-modal">Close</button>
+    </div>
+</div>
+</div>
             </ul>
         </nav>
     </header>
 
     <main>
+        <div id="custom-product-form">
+    <h2>Add Custom Product</h2>
+    <input type="text" id="custom-product-name" placeholder="Product Name" required>
+    <input type="number" id="custom-product-price" placeholder="Product Price" required min="0" step="0.01">
+    <button id="add-custom-product">Add to Cart</button>
+</div>
         <section id="products">
             <h2>Products</h2>
             <div class="product-grid">
@@ -156,16 +182,17 @@
         </section>
     </main>
 
-    <div id="cart-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Your Cart</h2>
-            <ul id="cart-items"></ul>
-            <p id="total-price">Total: ₱0.00</p>
-            <button id="checkout-cash">Pay Cash</button>
-            <button id="checkout-rfid">Pay via RFID</button>
-        </div>
+   <div id="cart-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Your Cart</h2>
+        <ul id="cart-items"></ul>
+        <p id="total-price">Total: ₱0.00</p>
+        <button id="checkout-cash">Pay Cash</button>
+        <button id="checkout-rfid">Pay via RFID</button>
+         <button id="reset-cart">Reset Cart</button>
     </div>
+</div>
 
     <div id="rfid-modal" class="modal">
         <div class="modal-content">
@@ -180,7 +207,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2023 Sample Retail Store</p>
+        <p>&copy; 2024 Sample Retail Store</p>
     </footer>
 
     <script>
@@ -260,13 +287,102 @@
                 });
             });
         }
+        function resetCart() {
+    cart = []; // Clear the cart array
+    total = 0; // Reset total to 0
+    document.getElementById('cart-count').innerText = cart.length; // Update cart count
+    updateCart(); // Update the cart display
+}
+async function fetchTransactionLogs(rfid) {
+    const transactionList = document.getElementById('transaction-list');
+    transactionList.innerHTML = ''; // Clear previous transactions
 
-        function updateCart() {
-    const cartItems = document.getElementById('cart-items');
+    try {
+        const querySnapshot = await db.collection('test').doc('transactions').collection('transaction_logs')
+            .where('rfid', '==', rfid) // Assuming you store RFID in the transaction logs
+            .get();
+
+        if (querySnapshot.empty) {
+            transactionList.innerHTML = '<li>No transactions found for this RFID.</li>';
+            return;
+        }
+
+        querySnapshot.forEach(doc => {
+            const transaction = doc.data();
+            const li = document.createElement('li');
+            li.innerText = `Transaction ID: ${transaction.id}, Items: ${transaction.items.join(', ')}, Total: ₱${transaction.total}, Date: ${new Date(transaction.timestamp).toLocaleString()}`;
+            transactionList.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        transactionList.innerHTML = '<li>Error fetching transactions. Please try again later.</li>';
+    }
+}
+async function processRFID() {
+    const rfidInput = document.getElementById('rfidInput').value.trim();
+    if (!rfidInput) {
+        alert('Please enter or scan an RFID number.');
+        return;
+    }
+
+    try {
+        const rfidDoc = await db.collection('rfid_cards').doc(rfidInput).get();
+        if (!rfidDoc.exists) {
+            alert(`RFID card "${rfidInput}" not found.`);
+            return;
+        }
+
+        // Fetch transaction logs for the RFID
+        await fetchTransactionLogs(rfidInput);
+
+        // Show the transaction modal
+        document.getElementById('transaction-modal').style.display = 'block';
+    } catch (error) {
+        console.error('Error processing RFID:', error);
+        alert('An error occurred while processing the RFID.');
+    }
+}
+
+document.getElementById('fetch-transactions').addEventListener('click', async () => {
+    const rfidInput = document.getElementById('rfidInput').value.trim();
+    if (!rfidInput) {
+        alert('Please enter an RFID number.');
+        return;
+    }
+
+    // Fetch transaction logs for the RFID
+    await fetchTransactionLogs(rfidInput);
+
+    // Show the transaction modal
+    document.getElementById('transaction-modal').style.display = 'block';
+});
+
+document.getElementById('close-transaction-modal').addEventListener('click', () => {
+    document.getElementById('transaction-modal').style.display = 'none';
+});
+
+document.querySelectorAll('.close').forEach(button => {
+    button.addEventListener('click', () => {
+        document.getElementById('transaction-modal').style.display = 'none';
+    });
+});
+
+document.getElementById('close-transaction-modal').addEventListener('click', () => {
+    document.getElementById('transaction-modal').style.display = 'none';
+});
+
+document.querySelectorAll('.close').forEach(button => {
+    button.addEventListener('click', () => {
+        document.getElementById('transaction-modal').style.display = 'none';
+    });
+});
+document.getElementById('reset-cart').addEventListener('click', resetCart);
+    function updateCart() {
+        const cartItems = document.getElementById('cart-items');
     cartItems.innerHTML = '';
 
     cart.forEach(item => {
-        const li = document.createElement('li');
+            const li = document.createElement('li');
         li.innerText = `${item.name} - ₱${item.price.toFixed(2)}`; // Changed to pesos
         cartItems.appendChild(li);
     });
@@ -274,6 +390,54 @@
     document.getElementById('total-price').innerText = `Total: ₱${total.toFixed(2)}`; // Changed to pesos
 }
 
+document.getElementById('add-custom-product').addEventListener('click', addCustomProduct);
+
+// Add event listener for custom product addition
+document.getElementById('add-custom-product').addEventListener('click', addCustomProduct);
+
+function addCustomProduct() {
+    const name = document.getElementById('custom-product-name').value.trim();
+    const price = parseFloat(document.getElementById('custom-product-price').value);
+
+    if (name === '' || isNaN(price) || price < 0) {
+        alert('Please enter a valid product name and price.');
+        return;
+    }
+
+    // Create a product object
+    const product = {
+        name: name,
+        price: price
+    };
+}
+    //
+function addCustomProduct() {
+    const name = document.getElementById('custom-product-name').value.trim();
+    const price = parseFloat(document.getElementById('custom-product-price').value);
+
+    if (name === '' || isNaN(price) || price < 0) {
+        alert('Please enter a valid product name and price.');
+        return;
+    }
+
+    // Create a product object
+    const product = {
+        name: name,
+        price: price
+    };
+
+    // Add the product to the cart
+    cart.push(product);
+    total += price;
+
+    // Update the cart display
+    document.getElementById('cart-count').innerText = cart.length; // Update cart count
+    updateCart(); // Update the cart display
+
+    // Clear the input fields
+    document.getElementById('custom-product-name').value = '';
+    document.getElementById('custom-product-price').value = '';
+}
         async function processRFID() {
             const rfidInput = document.getElementById('rfidInput').value.trim();
             if (!rfidInput) {
