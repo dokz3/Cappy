@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-app-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore-compat.js"></script>
+  <title>RFID Points Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #FFFFFF;
+    }
+    .form-box {
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #F9F9F9;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .label {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .input {
+      width: 100%;
+      border: 1px solid #DDD;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    .button-container {
+      margin-bottom: 10px;
+    }
+    .button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      color: #FFFFFF;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .button.check-points {
+      background-color: #4CAF50;
+    }
+    .button.deactivate-card {
+      background-color: #DC143C;
+    }
+    .button.confirm-deactivation {
+      background-color: #FF4500;
+    }
+    .points-text {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .danger {
+      color: #FF0000;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-box">
+    <label class="label" for="rfid">RFID:</label>
+    <input type="text" id="rfid" class="input" placeholder="Enter RFID">
+    <div class="button-container">
+      <button class="button check-points" onclick="handleCheckPoints()">Check Points</button>
+    </div>
+    <div id="deactivate-button-container" class="button-container" style="display: none;">
+      <button class="button deactivate-card" onclick="showPinField()">Deactivate Card</button>
+    </div>
+    <p id="deactivated-message" class="danger" style="display: none;">The RFID Card is deactivated</p>
+
+    <div id="pin-field" style="display: none;">
+      <label class="label" for="pin">Enter PIN:</label>
+      <input type="password" id="pin" class="input" placeholder="Enter PIN">
+      <div class="button-container">
+        <button class="button confirm-deactivation" onclick="handleDeactivate()">Confirm Deactivation</button>
+      </div>
+    </div>
+
+    <div id="points-info" style="display: none;">
+      <p class="points-text" id="owner-name"></p>
+      <p class="points-text" id="available-points"></p>
+    </div>
+  </div>
+
+  <script>
+
+       const firebaseConfig = {
+            apiKey: "AIzaSyCQT0shSNqvUFrinSbNQ8aEg8IUZxgZIc8",
+            authDomain: "rfid-69405.firebaseapp.com",
+            projectId: "rfid-69405",
+            storageBucket: "rfid-69405.appspot.com",
+            messagingSenderId: "461366160537",
+            appId: "1:461366160537:web:4a130092163cc2e6c01c08",
+            measurementId: "G-M0F73797VX"
+        };
+        
+    const handleCheckPoints = async () => {
+      const rfid = document.getElementById('rfid').value;
+      if (!rfid) {
+        alert('Error: Please enter RFID.');
+        return;
+      }
+
+      try {
+        // Simulate fetching from database
+        const data = await fetchRfidData(rfid);
+        if (data) {
+          document.getElementById('deactivate-button-container').style.display = data.deactivated ? 'none' : 'block';
+          document.getElementById('deactivated-message').style.display = data.deactivated ? 'block' : 'none';
+          document.getElementById('points-info').style.display = !data.deactivated ? 'block' : 'none';
+          document.getElementById('owner-name').textContent = `RFID Card Owner: ${data.name}`;
+          document.getElementById('available-points').textContent = `Available Points: ${data.points}`;
+        } else {
+          alert('Error: RFID not found.');
+        }
+      } catch (error) {
+        console.error('Error fetching points:', error);
+        alert('Error: Unable to fetch points. Try again later.');
+      }
+    };
+
+    const showPinField = () => {
+      document.getElementById('pin-field').style.display = 'block';
+    };
+
+    const handleDeactivate = async () => {
+      const rfid = document.getElementById('rfid').value;
+      const pin = document.getElementById('pin').value;
+
+      if (!rfid || !pin) {
+        alert('Error: Please enter both RFID and PIN.');
+        return;
+      }
+
+      try {
+        // Simulate fetching from database and deactivation
+        const success = await deactivateRfid(rfid, pin);
+        if (success) {
+          alert('Success: RFID card deactivated and points reset.');
+          document.getElementById('rfid').value = '';
+          document.getElementById('pin').value = '';
+          document.getElementById('pin-field').style.display = 'none';
+          document.getElementById('points-info').style.display = 'none';
+        } else {
+          alert('Error: Incorrect PIN or RFID not found.');
+        }
+      } catch (error) {
+        console.error('Error deactivating card:', error);
+        alert('Error: Unable to deactivate card. Try again later.');
+      }
+    };
+
+    // Mock functions to simulate database calls
+    const fetchRfidData = async (rfid) => {
+      // Simulate fetching data for an RFID card
+      return rfid === '1234' ? { name: 'John Doe', points: 100, deactivated: false } : null;
+    };
+
+    const deactivateRfid = async (rfid, pin) => {
+      // Simulate checking PIN and deactivating RFID card
+      return rfid === '1234' && pin === '0000';
+    };
+  </script>
+</body>
+</html>
